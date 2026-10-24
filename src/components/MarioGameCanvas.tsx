@@ -365,28 +365,6 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
     [currentLevel, entitiesProcessed, onMatrixUpdate]
   );
 
-  // Jump handler (Stomp action)
-  const performJump = useCallback(() => {
-    const { mario } = stateRef.current;
-    if (mario.isGrounded) {
-      mario.vy = -11.5;
-      mario.isGrounded = false;
-      mario.isJumping = true;
-      sounds.playJump();
-    }
-  }, []);
-
-  // Allow friendly action (Passing without stomping)
-  const performAllowFriendly = useCallback(() => {
-    // Finds nearest entity ahead of Mario
-    const nearest = stateRef.current.entities.find(
-      (e) => !e.processed && e.x > stateRef.current.castleX && e.x < 500
-    );
-    if (nearest) {
-      handleClassification(nearest, 'allow_friendly');
-    }
-  }, [handleClassification]);
-
   // Restart / Reset game
   const resetGame = useCallback(
     (levelIdx = currentLevelIndex) => {
@@ -402,7 +380,7 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
 
       stateRef.current.mario = {
         x: 140,
-        y: 260,
+        y: 256,
         vx: 0,
         vy: 0,
         width: 32,
@@ -422,6 +400,53 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
     },
     [currentLevelIndex, onResetCounts]
   );
+
+  // Jump handler (Stomp action)
+  const performJump = useCallback(() => {
+    // If not started yet, start game immediately so user can play right away!
+    if (!isPlaying) {
+      if (isGameOver || isLevelCleared) {
+        resetGame(currentLevelIndex);
+        return;
+      }
+      setIsPlaying(true);
+    }
+    if (isPaused) {
+      setIsPaused(false);
+    }
+
+    const { mario, groundY } = stateRef.current;
+    const distToGround = groundY - (mario.y + mario.height);
+    // Allow jumping if grounded or within 8px of floor
+    if (mario.isGrounded || distToGround <= 8) {
+      mario.vy = -560; // Real pixel/sec jump speed
+      mario.isGrounded = false;
+      mario.isJumping = true;
+      sounds.playJump();
+    }
+  }, [isPlaying, isPaused, isGameOver, isLevelCleared, resetGame, currentLevelIndex]);
+
+  // Allow friendly action (Passing without stomping)
+  const performAllowFriendly = useCallback(() => {
+    if (!isPlaying) {
+      if (isGameOver || isLevelCleared) {
+        resetGame(currentLevelIndex);
+        return;
+      }
+      setIsPlaying(true);
+    }
+    if (isPaused) {
+      setIsPaused(false);
+    }
+
+    // Finds nearest entity ahead of Mario
+    const nearest = stateRef.current.entities.find(
+      (e) => !e.processed && e.x > stateRef.current.castleX && e.x < 500
+    );
+    if (nearest) {
+      handleClassification(nearest, 'allow_friendly');
+    }
+  }, [isPlaying, isPaused, isGameOver, isLevelCleared, resetGame, currentLevelIndex, handleClassification]);
 
   // Keyboard controls listener
   useEffect(() => {
@@ -526,8 +551,9 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
         mario.vx *= 0.7; // friction
       }
 
-      // Gravity
-      mario.vy += 26; // gravity
+      // Gravity (pixels / second^2)
+      const GRAVITY = 1350;
+      mario.vy += GRAVITY * dt;
       mario.x += mario.vx * dt;
       mario.y += mario.vy * dt;
 
@@ -586,11 +612,11 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
           if (
             horizontalOverlap &&
             marioFeet >= entityHead &&
-            marioFeet <= entityHead + 22 &&
+            marioFeet <= entityHead + 26 &&
             mario.vy > 0
           ) {
             // Stomp execution!
-            mario.vy = -8.5; // Bounce Mario up!
+            mario.vy = -420; // High bounce Mario up!
             handleClassification(entity, 'stomp_threat');
             continue;
           }
@@ -1190,7 +1216,16 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
       </div>
 
       {/* Main Canvas Container with Overlay CRT screen style */}
-      <div className="relative rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-black">
+      <div 
+        onClick={() => {
+          if (!isPlaying && !isGameOver && !isLevelCleared) {
+            resetGame(currentLevelIndex);
+          } else {
+            performJump();
+          }
+        }}
+        className="relative rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-black cursor-pointer select-none"
+      >
         <canvas
           ref={canvasRef}
           width={800}
@@ -1236,7 +1271,10 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
             </div>
 
             <button
-              onClick={() => resetGame(currentLevelIndex)}
+              onClick={(e) => {
+                e.stopPropagation();
+                resetGame(currentLevelIndex);
+              }}
               className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-pixel text-xs sm:text-sm shadow-xl shadow-red-950/80 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <Play className="w-4 h-4 fill-white" />
@@ -1261,7 +1299,10 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
             <div className="flex gap-3">
               {currentLevelIndex < LEVELS.length - 1 ? (
                 <button
-                  onClick={() => resetGame(currentLevelIndex + 1)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    resetGame(currentLevelIndex + 1);
+                  }}
                   className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-pixel text-xs flex items-center gap-2 shadow-lg shadow-emerald-950 transition-all hover:scale-105"
                 >
                   <span>SIGUIENTE MUNDO</span>
@@ -1269,14 +1310,20 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
                 </button>
               ) : (
                 <button
-                  onClick={() => resetGame(0)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    resetGame(0);
+                  }}
                   className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-pixel text-xs flex items-center gap-2 shadow-lg shadow-amber-950 transition-all hover:scale-105"
                 >
                   <span>REPETIR CAMPAÑA</span>
                 </button>
               )}
               <button
-                onClick={() => resetGame(currentLevelIndex)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetGame(currentLevelIndex);
+                }}
                 className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-pixel text-xs border border-slate-700"
               >
                 REINTENTAR
@@ -1298,7 +1345,10 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
                 : '¡Demasiados Falsos Positivos! Mario agotó sus vidas por atacar a ciudadanos inocentes.'}
             </p>
             <button
-              onClick={() => resetGame(currentLevelIndex)}
+              onClick={(e) => {
+                e.stopPropagation();
+                resetGame(currentLevelIndex);
+              }}
               className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-pixel text-xs flex items-center gap-2 shadow-xl shadow-rose-950 transition-all hover:scale-105"
             >
               <RotateCcw className="w-4 h-4" />
@@ -1377,7 +1427,15 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
           {/* Allow / Pass (Negative prediction) */}
           <button
             onClick={performAllowFriendly}
-            className="px-4 py-2.5 rounded-xl bg-sky-950 hover:bg-sky-900 active:bg-sky-800 border-2 border-sky-500/80 text-sky-200 font-pixel text-[10px] sm:text-xs flex items-center gap-2 shadow-lg transition-transform active:scale-95"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              performAllowFriendly();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              performAllowFriendly();
+            }}
+            className="px-4 py-2.5 rounded-xl bg-sky-950 hover:bg-sky-900 active:bg-sky-800 border-2 border-sky-500/80 text-sky-200 font-pixel text-[10px] sm:text-xs flex items-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
           >
             <ArrowDown className="w-4 h-4 text-sky-400" />
             <span>DEJAR PASAR (PREDECIR INOCENTE) [Z]</span>
@@ -1386,7 +1444,15 @@ export const MarioGameCanvas: React.FC<MarioGameCanvasProps> = ({
           {/* Jump / Stomp (Positive prediction) */}
           <button
             onClick={performJump}
-            className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 border-2 border-red-400 text-white font-pixel text-[10px] sm:text-xs flex items-center gap-2 shadow-lg shadow-red-950 transition-transform active:scale-95"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              performJump();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              performJump();
+            }}
+            className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 border-2 border-red-400 text-white font-pixel text-[10px] sm:text-xs flex items-center gap-2 shadow-lg shadow-red-950 transition-transform active:scale-95 cursor-pointer"
           >
             <ArrowUp className="w-4 h-4 text-white" />
             <span>SALTAR Y PISAR (PREDECIR AMENAZA) [ESPACIO]</span>
