@@ -1,0 +1,6 @@
+{
+  "name": "Super Confusion Bros - Matriz de Confusión",
+  "description": "Videojuego educativo estilo Mario Bros para aprender la matriz de confusión con enemigos representando Falsos Positivos y Falsos Negativos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
