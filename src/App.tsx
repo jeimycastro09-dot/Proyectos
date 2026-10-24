@@ -8,7 +8,8 @@ import { MatrixAcademy } from './components/MatrixAcademy';
 import { ThresholdLab } from './components/ThresholdLab';
 import { GameQuiz } from './components/GameQuiz';
 import { ClassificationHistory } from './components/ClassificationHistory';
-import { Gamepad2, BookOpen, Sliders, Award, Sparkles, HelpCircle } from 'lucide-react';
+import { InteractiveContextIntro } from './components/InteractiveContextIntro';
+import { Gamepad2, BookOpen, Sliders, Award, Sparkles, HelpCircle, Compass, Lightbulb } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<GameMode>('arcade');
@@ -68,10 +69,22 @@ export default function App() {
           </div>
 
           {/* Clean Segmented Tab Navigation (zero-pill discipline) */}
-          <nav className="flex items-center gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl">
+          <nav className="flex items-center gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl overflow-x-auto max-w-full">
+            <button
+              onClick={() => setActiveTab('intro')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
+                activeTab === 'intro'
+                  ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-950'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Contexto e Intuición</span>
+            </button>
+
             <button
               onClick={() => setActiveTab('arcade')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
                 activeTab === 'arcade'
                   ? 'bg-red-600 text-white font-semibold shadow-md shadow-red-950'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -83,7 +96,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('academy')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
                 activeTab === 'academy'
                   ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-950'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -95,7 +108,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('threshold')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
                 activeTab === 'threshold'
                   ? 'bg-cyan-600 text-white font-semibold shadow-md shadow-cyan-950'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -107,7 +120,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('quiz')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
                 activeTab === 'quiz'
                   ? 'bg-amber-600 text-white font-semibold shadow-md shadow-amber-950'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -122,12 +135,17 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
+        {/* TAB 0: CONTEXTO E INTUICIÓN FUNDAMENTAL */}
+        {activeTab === 'intro' && (
+          <InteractiveContextIntro onGoToGame={() => setActiveTab('arcade')} />
+        )}
+
         {/* TAB 1: ARCADE GAMEPLAY */}
         {activeTab === 'arcade' && (
           <div className="flex flex-col gap-6">
             {/* Quick Context Banner */}
-            <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
-              <div className="flex items-center gap-2">
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300 shadow-md">
+              <div className="flex items-center gap-2 max-w-2xl">
                 <Sparkles className="w-4 h-4 text-yellow-400 shrink-0" />
                 <span>
                   <strong>Tu Misión:</strong> Eres Mario, el modelo detector de amenazas.
@@ -136,14 +154,22 @@ export default function App() {
                   ni <strong>Falsos Negativos</strong>.
                 </span>
               </div>
-              <div className="flex items-center gap-2 font-mono text-[11px]">
-                <span className="text-slate-400">Controles:</span>
-                <span className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                  ESPACIO = Pisar
-                </span>
-                <span className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                  Z = Pasar
-                </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab('intro')}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-950 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-300 text-xs font-mono flex items-center gap-1.5 transition-colors"
+                >
+                  <Lightbulb className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>Ver contexto previo</span>
+                </button>
+                <div className="hidden sm:flex items-center gap-1 font-mono text-[11px]">
+                  <span className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                    ESPACIO = Pisar
+                  </span>
+                  <span className="bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                    Z = Pasar
+                  </span>
+                </div>
               </div>
             </div>
 

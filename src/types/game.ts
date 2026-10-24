@@ -73,7 +73,7 @@ export interface GameLogEntry {
   reason: string;
 }
 
-export type GameMode = 'arcade' | 'academy' | 'threshold' | 'quiz';
+export type GameMode = 'intro' | 'arcade' | 'academy' | 'threshold' | 'quiz';
 
 export interface LevelConfig {
   id: number;

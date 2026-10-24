@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MatrixCounts } from '../types/game';
 import { calculateMetrics } from '../utils/matrixCalculations';
+import { InteractiveContextIntro } from './InteractiveContextIntro';
 import {
   BookOpen,
   CheckCircle2,
@@ -14,9 +15,11 @@ import {
   HelpCircle,
   Lightbulb,
   Sparkles,
+  Compass,
 } from 'lucide-react';
 
 export const MatrixAcademy: React.FC = () => {
+  const [showIntro, setShowIntro] = useState<boolean>(false);
   // Interactive sandbox state for the academy calculator
   const [sandboxCounts, setSandboxCounts] = useState<MatrixCounts>({
     tp: 45,
@@ -53,7 +56,7 @@ export const MatrixAcademy: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-red-950/60 via-slate-900 to-amber-950/60 border-2 border-red-500/30 rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-red-950/60 via-slate-900 to-amber-950/60 border-2 border-red-500/30 rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 mb-2 text-red-400 font-pixel text-xs tracking-wider">
             <BookOpen className="w-4 h-4" />
@@ -70,7 +73,20 @@ export const MatrixAcademy: React.FC = () => {
             <strong className="text-white">modelo predijo</strong>.
           </p>
         </div>
+
+        <button
+          onClick={() => setShowIntro(!showIntro)}
+          className="shrink-0 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-pixel text-xs flex items-center gap-2 shadow-lg shadow-indigo-950 transition-all hover:scale-105 active:scale-95"
+        >
+          <Compass className="w-4 h-4" />
+          <span>{showIntro ? 'OCULTAR CONTEXTO' : '¿POR QUÉ EXISTE?'}</span>
+        </button>
       </div>
+
+      {/* Collapsible Interactive Context Intro */}
+      {showIntro && (
+        <InteractiveContextIntro onClose={() => setShowIntro(false)} />
+      )}
 
       {/* The 4 Quadrants Visualized */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
